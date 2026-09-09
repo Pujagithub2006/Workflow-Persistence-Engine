@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+         http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ========================================================= -->
+    <!-- Project Information                                       -->
+    <!-- ========================================================= -->
+
+    <groupId>org.workflow.engine</groupId>
+
+    <artifactId>workflow-persistence-engine</artifactId>
+
+    <version>1.0.0-SNAPSHOT</version>
+
+    <packaging>jar</packaging>
+
+    <name>Workflow Persistence Engine</name>
+
+    <description>
+        Enterprise Java Persistence Investigation
+        inspired by Jira Workflow Architecture.
+    </description>
+
+    <properties>
+
+        <project.build.sourceEncoding>
+            UTF-8
+        </project.build.sourceEncoding>
+
+        <maven.compiler.release>25</maven.compiler.release>
+
+        <postgres.version>42.7.7</postgres.version>
+
+        <slf4j.version>2.0.17</slf4j.version>
+
+        <logback.version>1.5.18</logback.version>
+
+        <junit.version>5.13.4</junit.version>
+
+    </properties>
+
+    <dependencies>
+
+        <!-- PostgreSQL JDBC Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgres.version}</version>
+        </dependency>
+
+        <!-- Logging Facade -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- Logging Implementation -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!-- JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+        <plugins>
+
+            <!-- Java Compiler -->
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+
+                <artifactId>maven-compiler-plugin</artifactId>
+
+                <version>3.14.1</version>
+
+                <configuration>
+
+                    <release>25</release>
+
+                </configuration>
+
+            </plugin>
+
+            <!-- Unit Testing -->
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+
+                <artifactId>maven-surefire-plugin</artifactId>
+
+                <version>3.5.4</version>
+
+            </plugin>
+
+            <!-- Create Executable Manifest -->
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+
+                <artifactId>maven-jar-plugin</artifactId>
+
+                <version>3.4.2</version>
+
+                <configuration>
+
+                    <archive>
+
+                        <manifest>
+
+                            <addClasspath>true</addClasspath>
+
+                            <mainClass>
+                                org.workflow.engine.bootstrap.WorkflowPersistenceApplication
+                            </mainClass>
+
+                        </manifest>
+
+                    </archive>
+
+                </configuration>
+
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+</project>
