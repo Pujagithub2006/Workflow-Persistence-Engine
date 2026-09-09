@@ -1,0 +1,54 @@
+2026-09-10 01:23:02.268
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                =====================================
+2026-09-10 01:23:02.271
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                Workflow Persistence Engine Started
+2026-09-10 01:23:02.272
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                Java Runtime : 25-loom+1-11
+2026-09-10 01:23:02.276
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                =====================================
+2026-09-10 01:23:08.867
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                =====================================
+2026-09-10 01:23:08.870
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                Workflow Persistence Engine Started
+2026-09-10 01:23:08.870
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                Java Runtime : 25-loom+1-11
+2026-09-10 01:23:08.874
+                INFO 
+                [main]
+                o.w.e.b.WorkflowPersistenceApplication
+                -
+                =====================================
+2026-09-10 01:23:20.062
+                INFO 
+                [main]
+                org.workflow.engine.Main
+                -
+                Workflow Persistence Engine Started!
