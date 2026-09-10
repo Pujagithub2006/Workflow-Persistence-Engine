@@ -1,4 +1,10 @@
 package org.workflow.engine.domain.enums;
 
-public class IssueType {
+public enum IssueType {
+    TASK,
+    BUG,
+    STORY,
+    EPIC,
+    SUBTASK,
+    IMPROVEMENT
 }
