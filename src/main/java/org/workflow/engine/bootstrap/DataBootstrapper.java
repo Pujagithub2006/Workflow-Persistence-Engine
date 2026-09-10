@@ -1,149 +1,96 @@
 package org.workflow.engine.bootstrap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.workflow.engine.domain.enums.IssuePriority;
-import org.workflow.engine.domain.enums.IssueStatus;
-import org.workflow.engine.domain.enums.IssueType;
-import org.workflow.engine.domain.enums.UserRole;
+import org.workflow.engine.domain.enums.*;
 import org.workflow.engine.domain.model.*;
 import org.workflow.engine.domain.valueobject.Email;
+import org.workflow.engine.persistence.SchemaInitializer;
+import org.workflow.engine.persistence.repositories.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataBootstrapper {
-    private static final Logger logger = LoggerFactory.getLogger(DataBootstrapper.class); // factory method to create Logger for this class
+    private static final Logger logger = LoggerFactory.getLogger(DataBootstrapper.class);
+
+    private final UserRepository userRepo = new UserRepository();
+    private final WorkspaceRepository workspaceRepo = new WorkspaceRepository();
+    private final ProjectRepository projectRepo = new ProjectRepository();
+    private final StateRepository stateRepo = new StateRepository();
+    private final IssueRepository issueRepo = new IssueRepository();
 
     public void bootstrap() {
-        logger.info("==== DOMAIN MODEL BOOTSTRAP ====");
+        logger.info("=== JDBC Bootstrap ===");
 
-        // create users
-        User admin = new User("admin", new Email("admin@example.com"),
-                "System Admin", UserRole.ADMIN);
-        User lead = new User("pujanikam", new Email("puja.nikam@example.com"),
-                "Puja Nikam", UserRole.PROJECT_LEAD);
-        User dev = new User("payalpatil", new Email("payal.patil@example.com"),
-                "Payal Patil", UserRole.DEVELOPER);
-        User tester = new User("kunaldeshmukh", new Email("kunal.deshmukh@example.com"),
-                "Kunal Deshmukh", UserRole.TESTER);
+        // 1. Users
+        User admin = userRepo.save(new User("admin",
+                new Email("admin@example.com"), "Admin", UserRole.ADMIN));
+        User lead = userRepo.save(new User("johndoe",
+                new Email("john@example.com"), "John Doe", UserRole.PROJECT_LEAD));
+        User dev = userRepo.save(new User("janesmith",
+                new Email("jane@example.com"), "Jane Smith", UserRole.DEVELOPER));
+        User tester = userRepo.save(new User("bob",
+                new Email("bob@example.com"), "Bob", UserRole.TESTER));
+        logger.info("Inserted {} users", 4);
 
-        logger.info("1. Created {} users", 4);
-
-        // create workspace
-        Workspace workspace = new Workspace("Diyaja Corp.", "Main workspace", admin);
+        // 2. Workspace
+        Workspace workspace = new Workspace("Acme Corp", "Main workspace", admin);
         workspace.addMember(lead);
         workspace.addMember(dev);
         workspace.addMember(tester);
+        workspaceRepo.save(workspace);
+        logger.info("Inserted workspace: {}", workspace.getName());
 
-        logger.info("2. Created workspace: {} ({} members)", workspace.getName(), workspace.getMembers().size());
+        // 3. States (attach to a workflow created implicitly — see note)
+        // For simplicity, create states without a workflow row in this issue
+        State todo = stateRepo.save(
+                new State("To Do", "Initial state", IssueStatus.TO_DO), 1L);
+        State inProgress = stateRepo.save(
+                new State("In Progress", "Working", IssueStatus.IN_PROGRESS), 1L);
+        State inReview = stateRepo.save(
+                new State("In Review", "Review", IssueStatus.IN_REVIEW), 1L);
+        State done = stateRepo.save(
+                new State("Done", "Complete", IssueStatus.DONE), 1L);
+        logger.info("Inserted {} states", 4);
 
-        // create workflow with states and transitions
-        Workflow workflow = createDefaultWorkflow();
-        logger.info("3. Created workflow: {} ({} states)", workflow.getName(), workflow.getStates().size());
-
-        // create project
-        Project project = new Project("Diyaja", "Diyaja Project", "Main Diyaja project", lead);
-        project.assignWorkflow(workflow);
-        workspace.addProject(project);
+        // 4. Project
+        Project project = new Project("ACME", "Acme Project",
+                "Main Acme project", lead);
+        project.setWorkspace(workspace);
         project.addTeamMember(dev);
         project.addTeamMember(tester);
+        projectRepo.save(project);
+        logger.info("Inserted project: {}", project.getKey());
 
-        logger.info("4. Created project: {}", project.getKey());
-
-        // create issues
-        Issue issue1 = project.createIssue("Implement user authentication","Add OAuth2-based authentication", dev, IssueType.TASK, IssuePriority.MAJOR);
+        // 5. Issues
+        Issue issue1 = new Issue(project.generateIssueKey(),
+                "Implement authentication",
+                "OAuth2 login flow", dev,
+                IssueType.TASK, IssuePriority.MAJOR, todo);
+        issue1.setProject(project);
         issue1.assignTo(dev);
+        issueRepo.save(issue1);
 
-        Issue issue2 = project.createIssue("Fix login page error","Users get 500 error with valid credentials", tester, IssueType.BUG, IssuePriority.CRITICAL);
+        Issue issue2 = new Issue(project.generateIssueKey(),
+                "Fix login page error",
+                "500 error on valid credentials", tester,
+                IssueType.BUG, IssuePriority.CRITICAL, todo);
+        issue2.setProject(project);
         issue2.assignTo(dev);
+        issueRepo.save(issue2);
+        logger.info("Inserted {} issues", 2);
 
-        logger.info("5. Created {} issues", project.getIssues().size());
+        // 6. Verify persistence
+        logger.info("=== Verification ===");
+        logger.info("Users in DB: {}", userRepo.findAll().size());
+        logger.info("Workspaces in DB: {}", workspaceRepo.findAll().size());
+        logger.info("Project loaded: {}", projectRepo.findByKey("ACME").orElseThrow());
+        logger.info("Issues in project: {}",
+                issueRepo.findByProject(project.getId()).size());
 
-        // create comments
-        issue1.addComment("Started working on this", dev);
-        issue1.addComment("Please use the new security library", lead);
-        issue2.addComment("Found null pointer in validation", tester);
-
-        logger.info("6. Added comments");
-
-        // simulate workflow transitions
-        State inProgress = workflow.getStateByName("In Progress");
-        State inReview = workflow.getStateByName("In Review");
-        State done = workflow.getStateByName("Done");
-
-        issue1.transitionTo(inProgress, dev);
-        issue1.transitionTo(inReview, dev);
-        issue1.transitionTo(done, lead);
-
-        logger.info("7.1. Transitioned {} through workflow", issue1.getIssueKey());
-
-        issue2.updatePriority(IssuePriority.BLOCKER, lead);
-        logger.info("7.2. Updated {} priority to BLOCKER", issue2.getIssueKey());
-
-        // verify object graph
-        verifyObjectGraph(workspace);
-
-        // display summary
-        logger.info("9. === Bootstrap Complete ===");
-        logger.info("9.1. Workspace: {} ({} members, {} projects)",
-                workspace.getName(),
-                workspace.getMembers().size(),
-                workspace.getProjects().size());
-        logger.info("9.2. Project: {} ({} issues, {} team members)",
-                project.getKey(),
-                project.getIssues().size(),
-                project.getTeamMembers().size());
-        logger.info("9.3. Issue {}: {} audit entries, {} comments",
-                issue1.getIssueKey(),
-                issue1.getAuditLogs().size(),
-                issue1.getComments().size());
-        logger.info("9.4. Issue {} is resolved: {}",
-                issue1.getIssueKey(), issue1.isResolved());
-    }
-
-    private Workflow createDefaultWorkflow() {
-        State todo = new State("To Do", "Initial state", IssueStatus.TO_DO);
-        State inProgress = new State("In Progress", "Work started", IssueStatus.IN_PROGRESS);
-        State inReview = new State("In Review", "Awaiting review", IssueStatus.IN_REVIEW);
-        State done = new State("Done", "Complete", IssueStatus.DONE);
-        State closed = new State("Closed", "Closed", IssueStatus.CLOSED);
-
-        Workflow workflow = new Workflow("Standard Workflow", "Default workflow");
-        workflow.addState(todo);
-        workflow.addState(inProgress);
-        workflow.addState(inReview);
-        workflow.addState(done);
-        workflow.addState(closed);
-        workflow.setInitialState(todo);
-
-        new Transition("Start Progress", "Begin work", todo, inProgress);
-        new Transition("Start Review", "Move to review", inProgress, inReview);
-        new Transition("Complete", "Complete work", inReview, done);
-        new Transition("Close", "Close issue", done, closed);
-
-        return workflow;
-    }
-
-    private void verifyObjectGraph(Workspace workspace) {
-        logger.info("8.1. Verifying Object Graph");
-
-        if (workspace.getMembers().isEmpty()) throw new AssertionError("No members");
-        if (workspace.getProjects().isEmpty()) throw new AssertionError("No projects");
-
-        for (Project project : workspace.getProjects()) {
-            if (project.getWorkflow() == null) throw new AssertionError("No workflow");
-            for (Issue issue : project.getIssues()) {
-                if (issue.getCurrentState() == null) throw new AssertionError("No state");
-                if (issue.getReporter() == null) throw new AssertionError("No reporter");
-                if (issue.getAuditLogs().isEmpty()) throw new AssertionError("No audit logs");
-                for (Comment c : issue.getComments()) {
-                    if (c.getAuthor() == null) throw new AssertionError("No author");
-                }
-            }
-        }
-
-        logger.info("8.2. Object graph verification passed");
+        logger.info("=== Bootstrap Complete ===");
     }
 
     public static void main(String[] args) {
+        SchemaInitializer.initialize();
         new DataBootstrapper().bootstrap();
     }
 }
