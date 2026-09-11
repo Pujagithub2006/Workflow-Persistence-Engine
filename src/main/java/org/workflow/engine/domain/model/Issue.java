@@ -66,6 +66,11 @@ public class Issue {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    protected Issue() {
+        this.comments = new ArrayList<>();
+        this.auditLogs = new ArrayList<>();
+    }
+
     public Issue(IssueKey issueKey, String summary, String description,
                  User reporter, IssueType type, IssuePriority priority, State initialState) {
         if (issueKey == null) {
@@ -101,7 +106,7 @@ public class Issue {
 
 
     @PrePersist
-    void onPersist() {
+    protected void onPersist() {
         if(createdAt == null) createdAt = LocalDateTime.now();
     }
 

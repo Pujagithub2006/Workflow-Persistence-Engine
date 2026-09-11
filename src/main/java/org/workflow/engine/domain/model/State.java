@@ -43,6 +43,11 @@ public class State {
     @Column(name = "is_initial", nullable = false)
     private boolean initial;
 
+    protected State() {
+        this.outboundTransitions = new HashSet<>();
+        this.inboundTransitions = new HashSet<>();
+    }
+
     public State(String name, String description, IssueStatus status) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("State name cannot be null or empty");

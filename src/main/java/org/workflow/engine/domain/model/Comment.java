@@ -27,6 +27,10 @@ public class Comment {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    protected Comment() {
+
+    }
+
     public Comment(String commentContent, User author, Issue issue) {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("Comment content cannot be null or empty");
@@ -37,10 +41,15 @@ public class Comment {
         if (issue == null) {
             throw new IllegalArgumentException("Issue cannot be null");
         }
-        this.content = content;
+        this.content = commentContent;
         this.author = author;
         this.issue = issue;
         this.createdAt = LocalDateTime.now();
+    }
+
+    @PrePersist
+    protected void onPersist() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
     }
 
     public void updateContent(String newContent) {

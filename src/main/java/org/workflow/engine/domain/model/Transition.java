@@ -33,6 +33,10 @@ public class Transition {
     @JoinColumn(name = "to_state_id", nullable = false)
     private State toState;
 
+    protected Transition() {
+
+    }
+
     public Transition(String name, String description, State fromState, State toState) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Transition name cannot be null or empty");

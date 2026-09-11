@@ -26,6 +26,10 @@ public class Workflow {
     @Transient
     private State initialState;
 
+    protected Workflow() {
+        this.states = new HashSet<>();
+    }
+
     public Workflow(String name, String description) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Workflow name cannot be null or empty");

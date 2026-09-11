@@ -30,6 +30,10 @@ public class AuditLog {
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
+    protected AuditLog() {
+
+    }
+
     public AuditLog(Issue issue, String action, User performedBy, String field) {
         if (issue == null) {
             throw new IllegalArgumentException("Issue cannot be null");
@@ -42,6 +46,11 @@ public class AuditLog {
         this.performedBy = performedBy;
         this.field = field;
         this.timestamp = LocalDateTime.now();
+    }
+
+    @PrePersist
+    protected void onPersist() {
+        if (timestamp == null) timestamp = LocalDateTime.now();
     }
 
     public Long getId() {
