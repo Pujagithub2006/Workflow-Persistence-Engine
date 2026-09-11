@@ -15,6 +15,9 @@ import java.util.Set;
         )
 )
 public class State {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -78,6 +81,8 @@ public class State {
     public boolean isTerminal() {
         return status.isTerminal();
     }
+
+    public Long getVersion() { return version; }
 
     public Long getId() {
         return id;
