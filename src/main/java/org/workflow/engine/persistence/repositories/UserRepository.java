@@ -2,6 +2,7 @@ package org.workflow.engine.persistence.repositories;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.LockModeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.workflow.engine.domain.model.User;
@@ -14,6 +15,13 @@ import java.util.Optional;
 
 public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
+
+    // load user with a pessimistic write lock (other writers block until this transaction commits).
+    public Optional<User> findByIdForUpdate(Long id) {
+        return TransactionManager.inTransaction(em->
+           Optional.ofNullable(em.find(User.class, id, LockModeType.PESSIMISTIC_WRITE))
+        );
+    }
 
     public User save(User user) {
         return TransactionManager.inTransaction(em->{
