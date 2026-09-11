@@ -13,6 +13,9 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 public class User {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -82,6 +85,8 @@ public class User {
     public void activate() {
         this.active = true;
     }
+
+    public Long getVersion() { return version; }
 
     public Long getUserId() {
         return userId;
