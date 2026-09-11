@@ -1,13 +1,36 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
+import jakarta.persistence.UniqueConstraint;
+
 import java.util.Objects;
 
+@Entity
+@Table(
+        name = "transitions",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"from_state_id", "to_state_id"}
+        )
+
+)
 public class Transition {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_state_id", nullable = false)
     private State fromState;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_state_id", nullable = false)
     private State toState;
 
     public Transition(String name, String description, State fromState, State toState) {
