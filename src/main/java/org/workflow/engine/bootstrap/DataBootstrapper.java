@@ -16,11 +16,10 @@ public class DataBootstrapper {
     private final UserRepository userRepo = new UserRepository();
     private final WorkspaceRepository workspaceRepo = new WorkspaceRepository();
     private final ProjectRepository projectRepo = new ProjectRepository();
-    private final StateRepository stateRepo = new StateRepository();
     private final IssueRepository issueRepo = new IssueRepository();
 
     public void bootstrap() {
-        logger.info("=== Hibernate Bootstrap ===");
+        logger.info("=== JPA Bootstrap ===");
 
         // 1. Users
         User admin = userRepo.save(new User("admin",
@@ -33,7 +32,24 @@ public class DataBootstrapper {
                 new Email("bob@example.com"), "Bob", UserRole.TESTER));
         logger.info("Inserted {} users", 4);
 
-        // 2. Workflow + states (in one transaction via cascade)
+        // 2. Workspace
+        Workspace workspace = new Workspace("Acme Corp", "Main workspace", admin);
+        workspace.addMember(lead);
+        workspace.addMember(dev);
+        workspace.addMember(tester);
+        workspace = workspaceRepo.save(workspace);
+        logger.info("Saved workspace: {}", workspace.getName());
+
+        // 3. Project
+        Project project = new Project("ACME", "Acme Project",
+                "Main project", lead);
+        project.setWorkspace(workspace);
+        project.addTeamMember(dev);
+        project.addTeamMember(tester);
+        project = projectRepo.save(project);
+        logger.info("Saved project: {}", project.getKey());
+
+        // 4. Workflow + states (in one transaction via cascade)
         Workflow workflow = new Workflow("Standard Workflow", "Default workflow");
         State todo = new State("To Do", "Initial state", IssueStatus.TO_DO);
         State inProgress = new State("In Progress", "Working", IssueStatus.IN_PROGRESS);
@@ -62,39 +78,34 @@ public class DataBootstrapper {
         }
         logger.info("Saved workflow with {} states", workflow.getStates().size());
 
-        // 3. Workspace
-        Workspace workspace = new Workspace("Acme Corp", "Main workspace", admin);
-        workspace.addMember(lead);
-        workspace.addMember(dev);
-        workspace.addMember(tester);
-        workspace = workspaceRepo.save(workspace);
-        logger.info("Saved workspace: {}", workspace.getName());
-
-        // 4. Project
-        Project project = new Project("ACME", "Acme Project",
-                "Main project", lead);
-        project.setWorkspace(workspace);
-        project.addTeamMember(dev);
-        project.addTeamMember(tester);
+        project.setWorkflow(workflow);
         project = projectRepo.save(project);
-        logger.info("Saved project: {}", project.getKey());
 
         // 5. Issues
-        Issue issue1 = new Issue(project.generateIssueKey(),
+        Issue issue1 = project.createIssue(
                 "Implement authentication",
-                "OAuth2 login flow", dev,
-                IssueType.TASK, IssuePriority.MAJOR, todo);
-        issue1.setProject(project);
+                "OAuth2 login flow",
+                dev,
+                IssueType.TASK,
+                IssuePriority.MAJOR
+        );
+
         issue1.assignTo(dev);
+
         issueRepo.save(issue1);
 
-        Issue issue2 = new Issue(project.generateIssueKey(),
+        Issue issue2 = project.createIssue(
                 "Fix login page error",
-                "500 error on valid credentials", tester,
-                IssueType.BUG, IssuePriority.CRITICAL, todo);
-        issue2.setProject(project);
+                "500 error on valid credentials",
+                tester,
+                IssueType.BUG,
+                IssuePriority.CRITICAL
+        );
+
         issue2.assignTo(dev);
+
         issueRepo.save(issue2);
+
         logger.info("Saved {} issues", 2);
 
         // 6. Verify
