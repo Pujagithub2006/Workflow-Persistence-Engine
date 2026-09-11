@@ -1,20 +1,46 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
 import org.workflow.engine.domain.enums.IssueStatus;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Entity
+@Table(
+        name = "states",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"workflow_id", "name"}
+        )
+)
 public class State {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
     private IssueStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id", nullable = false)
     private Workflow workflow;
-    private Set<Transition> outboundTransitions;
-    private Set<Transition> inboundTransitions;
+
+    @OneToMany(mappedBy = "fromState", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Transition> outboundTransitions = new HashSet<>();
+
+    @OneToMany(mappedBy = "toState")
+    private Set<Transition> inboundTransitions = new HashSet<>();
+
+    @Column(name = "is_initial", nullable = false)
     private boolean initial;
 
     public State(String name, String description, IssueStatus status) {
