@@ -10,6 +10,26 @@ import java.util.Optional;
 
 public class ProjectRepository {
 
+    // Fetch-Join method
+
+    // fetch project with lead and workspace in ONE query.
+    public Optional<Project> findByKeyWithDetails(String key) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                            "SELECT p FROM Project p " +
+                                    "JOIN FETCH p.projectLead " +
+                                    "LEFT JOIN FETCH p.workspace " +
+                                    "WHERE p.key = :k",
+                            Project.class)
+                    .setParameter("k", key)
+                    .getResultStream()
+                    .findFirst();
+        } finally {
+            em.close();
+        }
+    }
+
     public Project save(Project project) {
         EntityManager em = JpaUtil.getEntityManager();
         EntityTransaction tx = em.getTransaction();

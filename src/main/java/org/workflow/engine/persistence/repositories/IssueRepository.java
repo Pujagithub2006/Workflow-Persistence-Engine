@@ -10,6 +10,45 @@ import java.util.List;
 import java.util.Optional;
 
 public class IssueRepository {
+    // Fetch-Join Methods
+
+    // 1. fetch issue with reporter and assignee in ONE query (when we need both)
+    public Optional<Issue> findByKeyWithUsers(String key) {
+        EntityManager em = JpaUtil.getEntityManager();
+
+        try {
+            return em.createQuery(
+                    "SELECT i FROM Issue i " +
+                    "JOIN FETCH i.reporter " +
+                            "LEFT JOIN FETCH i.assignee " +
+                            "WHERE i.issueKey = :k",
+                    Issue.class)
+                    .setParameter("k", new IssueKey(key))
+                    .getResultStream()
+                    .findFirst();
+        } finally {
+            em.close();
+        }
+    }
+
+    // 2. fetch issues with reporter and current state in ONE query (use this for board/listing views - kanban or sprint boards).
+    public List<Issue> findByProjectWithDetails(Long projectId) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            return em.createQuery(
+                            "SELECT i FROM Issue i " +
+                                    "JOIN FETCH i.reporter " +
+                                    "LEFT JOIN FETCH i.assignee " +
+                                    "JOIN FETCH i.currentState " +
+                                    "WHERE i.project.id = :pid " +
+                                    "ORDER BY i.id DESC",
+                            Issue.class)
+                    .setParameter("pid", projectId)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
 
     public Issue save(Issue issue) {
         EntityManager em = JpaUtil.getEntityManager();

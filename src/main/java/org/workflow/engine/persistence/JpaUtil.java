@@ -21,6 +21,10 @@ public class JpaUtil {
         }
     }
 
+    public static EntityManagerFactory getEntityManagerFactory() {
+        return emf;
+    }
+
     public static EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
