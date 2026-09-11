@@ -1,15 +1,26 @@
 package org.workflow.engine.persistence.repositories;
 
+import jakarta.persistence.LockModeType;
 import org.workflow.engine.domain.model.Issue;
 import org.workflow.engine.domain.valueobject.IssueKey;
 import org.workflow.engine.persistence.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import org.workflow.engine.persistence.TransactionManager;
 
 import java.util.List;
 import java.util.Optional;
 
 public class IssueRepository {
+    // Locks
+
+    // load issue with a pessimistic write lock (use only when you need to serialize updates to a single issue).
+    public Optional<Issue> findByIdForUpdate(Long id) {
+        return TransactionManager.inTransaction(em ->
+                Optional.ofNullable(em.find(Issue.class, id, LockModeType.PESSIMISTIC_WRITE))
+        );
+    }
+
     // Fetch-Join Methods
 
     // 1. fetch issue with reporter and assignee in ONE query (when we need both)
