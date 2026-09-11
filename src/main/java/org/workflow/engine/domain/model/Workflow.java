@@ -1,15 +1,34 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Entity
+@Table(name = "workflows")
 public class Workflow {
-    private long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @OneToMany(mappedBy = "workflow", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<State> states = new HashSet<>();
+
+    @Transient
     private State initialState;
-    private Set<State> states;
+
+    protected Workflow() {
+        this.states = new HashSet<>();
+    }
 
     public Workflow(String name, String description) {
         if (name == null || name.isBlank()) {

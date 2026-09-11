@@ -1,16 +1,38 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Entity
+@Table(name = "audit_logs")
 public class AuditLog {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "issue_id", nullable = false)
     private Issue issue;
+
+    @Column(name = "action", nullable = false, length = 255)
     private String action;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "performed_by_id")
     private User performedBy;
+
+    @Column(name = "field", length = 50)
     private String field;
+
+    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
+
+    protected AuditLog() {
+
+    }
 
     public AuditLog(Issue issue, String action, User performedBy, String field) {
         if (issue == null) {
@@ -24,6 +46,11 @@ public class AuditLog {
         this.performedBy = performedBy;
         this.field = field;
         this.timestamp = LocalDateTime.now();
+    }
+
+    @PrePersist
+    protected void onPersist() {
+        if (timestamp == null) timestamp = LocalDateTime.now();
     }
 
     public Long getId() {

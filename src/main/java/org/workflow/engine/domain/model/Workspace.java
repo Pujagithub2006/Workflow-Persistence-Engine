@@ -1,16 +1,45 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Entity
+@Table(name = "workspaces")
 public class Workspace {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
-    private Set<User> members;
-    private Set<Project> projects;
+
+    @ManyToMany
+    @JoinTable(
+        name = "workspace_members",
+        joinColumns = @JoinColumn(name = "workspace_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> members = new HashSet<>();
+
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Project> projects = new HashSet<>();
+
+
+    protected Workspace() {
+        this.members = new HashSet<>();
+        this.projects = new HashSet<>();
+    }
 
     public Workspace(String name, String description, User owner) {
         if (name == null || name.isBlank()) {

@@ -1,8 +1,10 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
 import org.workflow.engine.domain.enums.IssuePriority;
 import org.workflow.engine.domain.enums.IssueStatus;
 import org.workflow.engine.domain.enums.IssueType;
+import org.workflow.engine.domain.value.IssueKeyConverter;
 import org.workflow.engine.domain.valueobject.IssueKey;
 
 import java.time.LocalDateTime;
@@ -10,22 +12,64 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Entity
+@Table(name = "issues")
 public class Issue {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Convert(converter = IssueKeyConverter.class)
+    @Column(name = "issue_key", nullable = false, unique = true, length = 20)
     private IssueKey issueKey;
+
+    @Column(name = "summary", nullable = false, length = 500)
     private String summary;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
     private User assignee;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "issue_type", nullable = false, length = 20)
     private IssueType issueType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false, length = 20)
     private IssuePriority priority;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "state_id", nullable = false)
     private State currentState;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
     private Project project;
-    private List<Comment> comments;
-    private List<AuditLog> auditLogs;
+
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AuditLog> auditLogs = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
+
+    protected Issue() {
+        this.comments = new ArrayList<>();
+        this.auditLogs = new ArrayList<>();
+    }
 
     public Issue(IssueKey issueKey, String summary, String description,
                  User reporter, IssueType type, IssuePriority priority, State initialState) {
@@ -58,6 +102,12 @@ public class Issue {
         this.auditLogs = new ArrayList<>();
         this.createdAt = LocalDateTime.now();
         addAuditLog("Issue created", reporter, null);
+    }
+
+
+    @PrePersist
+    protected void onPersist() {
+        if(createdAt == null) createdAt = LocalDateTime.now();
     }
 
     public void assignTo(User assignee) {

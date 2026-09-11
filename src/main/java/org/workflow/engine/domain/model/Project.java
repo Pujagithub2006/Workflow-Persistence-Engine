@@ -1,5 +1,6 @@
 package org.workflow.engine.domain.model;
 
+import jakarta.persistence.*;
 import org.workflow.engine.domain.enums.IssuePriority;
 import org.workflow.engine.domain.enums.IssueType;
 import org.workflow.engine.domain.valueobject.IssueKey;
@@ -8,17 +9,53 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Entity
+@Table(name = "projects")
 public class Project {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "key", nullable = false, unique = true, length = 10)
     private String key;
+
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspace_id")
     private Workspace workspace;
+
+    @Transient
     private Workflow workflow;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_lead_id", nullable = false)
     private User projectLead;
-    private Set<User> teamMembers;
-    private Set<Issue> issues;
-    private long nextIssueNumber;
+
+    @ManyToMany
+    @JoinTable(
+            name = "project_team",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> teamMembers = new HashSet<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Issue> issues = new HashSet<>();
+
+    @Column(name = "next_issue_number", nullable = false)
+    private long nextIssueNumber = 1;
+
+
+    protected Project() {
+        this.teamMembers = new HashSet<>();
+        this.issues = new HashSet<>();
+    }
 
     public Project(String key, String name, String description, User projectLead) {
         if (key == null || key.isBlank()) {
@@ -36,7 +73,6 @@ public class Project {
         this.projectLead = projectLead;
         this.teamMembers = new HashSet<>();
         this.issues = new HashSet<>();
-        this.nextIssueNumber = 1;
         this.teamMembers.add(projectLead);
     }
 

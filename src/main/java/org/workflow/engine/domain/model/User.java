@@ -1,20 +1,46 @@
 package org.workflow.engine.domain.model;
 
+
+import jakarta.persistence.*;
 import org.workflow.engine.domain.enums.UserRole;
+import org.workflow.engine.domain.value.EmailConverter;
 import org.workflow.engine.domain.valueobject.Email;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Entity
+@Table(name = "users")
 public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userId;
+
+    @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
+
+    @Convert(converter = EmailConverter.class)
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private Email email;
+
+    @Column(name = "display_name", length = 100)
     private String displayName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
+
+    @Column(name = "active", nullable = false)
     private boolean active;
-    private Set<Workspace> workspaces;
+
+    @ManyToMany(mappedBy = "members")
+    private Set<Workspace> workspaces = new HashSet<>();
+
+    protected User() {
+        this.workspaces = new HashSet<>();
+    }
 
     public User(String username, Email email, String displayName, UserRole role) {
         if (username == null || username.isBlank()) {

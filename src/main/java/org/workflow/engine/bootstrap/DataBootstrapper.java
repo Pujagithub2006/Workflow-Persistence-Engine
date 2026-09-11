@@ -1,8 +1,11 @@
 package org.workflow.engine.bootstrap;
 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.workflow.engine.domain.enums.*;
 import org.workflow.engine.domain.model.*;
 import org.workflow.engine.domain.valueobject.Email;
+import org.workflow.engine.persistence.HibernateUtil;
 import org.workflow.engine.persistence.SchemaInitializer;
 import org.workflow.engine.persistence.repositories.*;
 import org.slf4j.Logger;
@@ -18,7 +21,7 @@ public class DataBootstrapper {
     private final IssueRepository issueRepo = new IssueRepository();
 
     public void bootstrap() {
-        logger.info("=== JDBC Bootstrap ===");
+        logger.info("=== Hibernate Bootstrap ===");
 
         // 1. Users
         User admin = userRepo.save(new User("admin",
@@ -31,34 +34,47 @@ public class DataBootstrapper {
                 new Email("bob@example.com"), "Bob", UserRole.TESTER));
         logger.info("Inserted {} users", 4);
 
-        // 2. Workspace
+        // 2. Workflow + states (in one transaction via cascade)
+        Workflow workflow = new Workflow("Standard Workflow", "Default workflow");
+        State todo = new State("To Do", "Initial state", IssueStatus.TO_DO);
+        State inProgress = new State("In Progress", "Working", IssueStatus.IN_PROGRESS);
+        State done = new State("Done", "Complete", IssueStatus.DONE);
+
+        workflow.addState(todo);
+        workflow.addState(inProgress);
+        workflow.addState(done);
+        workflow.setInitialState(todo);
+
+        Transaction tx = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            tx = session.beginTransaction();
+
+            session.persist(workflow);
+
+            tx.commit();
+
+        } catch (Exception e) {
+            if (tx != null && tx.isActive()) tx.rollback();
+            throw e;
+        }
+        logger.info("Saved workflow with {} states", workflow.getStates().size());
+
+        // 3. Workspace
         Workspace workspace = new Workspace("Acme Corp", "Main workspace", admin);
         workspace.addMember(lead);
         workspace.addMember(dev);
         workspace.addMember(tester);
-        workspaceRepo.save(workspace);
-        logger.info("Inserted workspace: {}", workspace.getName());
-
-        // 3. States (attach to a workflow created implicitly — see note)
-        // For simplicity, create states without a workflow row in this issue
-        State todo = stateRepo.save(
-                new State("To Do", "Initial state", IssueStatus.TO_DO), 1L);
-        State inProgress = stateRepo.save(
-                new State("In Progress", "Working", IssueStatus.IN_PROGRESS), 1L);
-        State inReview = stateRepo.save(
-                new State("In Review", "Review", IssueStatus.IN_REVIEW), 1L);
-        State done = stateRepo.save(
-                new State("Done", "Complete", IssueStatus.DONE), 1L);
-        logger.info("Inserted {} states", 4);
+        workspace = workspaceRepo.save(workspace);
+        logger.info("Saved workspace: {}", workspace.getName());
 
         // 4. Project
         Project project = new Project("ACME", "Acme Project",
-                "Main Acme project", lead);
+                "Main project", lead);
         project.setWorkspace(workspace);
         project.addTeamMember(dev);
         project.addTeamMember(tester);
-        projectRepo.save(project);
-        logger.info("Inserted project: {}", project.getKey());
+        project = projectRepo.save(project);
+        logger.info("Saved project: {}", project.getKey());
 
         // 5. Issues
         Issue issue1 = new Issue(project.generateIssueKey(),
@@ -76,21 +92,22 @@ public class DataBootstrapper {
         issue2.setProject(project);
         issue2.assignTo(dev);
         issueRepo.save(issue2);
-        logger.info("Inserted {} issues", 2);
+        logger.info("Saved {} issues", 2);
 
-        // 6. Verify persistence
+        // 6. Verify
         logger.info("=== Verification ===");
-        logger.info("Users in DB: {}", userRepo.findAll().size());
-        logger.info("Workspaces in DB: {}", workspaceRepo.findAll().size());
-        logger.info("Project loaded: {}", projectRepo.findByKey("ACME").orElseThrow());
-        logger.info("Issues in project: {}",
-                issueRepo.findByProject(project.getId()).size());
-
+        logger.info("Users: {}", userRepo.findAll().size());
+        logger.info("Workspaces: {}", workspaceRepo.findAll().size());
+        logger.info("Project: {}", projectRepo.findByKey("ACME").orElseThrow().getName());
+        logger.info("Issues in project: {}", issueRepo.findByProject(project.getId()).size());
         logger.info("=== Bootstrap Complete ===");
     }
 
     public static void main(String[] args) {
-        SchemaInitializer.initialize();
-        new DataBootstrapper().bootstrap();
+        try {
+            new DataBootstrapper().bootstrap();
+        } finally {
+            HibernateUtil.shutdown();
+        }
     }
 }
