@@ -1,12 +1,11 @@
 package org.workflow.engine.bootstrap;
 
-import org.hibernate.Session;
-import org.hibernate.Transaction;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import org.workflow.engine.domain.enums.*;
 import org.workflow.engine.domain.model.*;
 import org.workflow.engine.domain.valueobject.Email;
-import org.workflow.engine.persistence.HibernateUtil;
-import org.workflow.engine.persistence.SchemaInitializer;
+import org.workflow.engine.persistence.JpaUtil;
 import org.workflow.engine.persistence.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +44,21 @@ public class DataBootstrapper {
         workflow.addState(done);
         workflow.setInitialState(todo);
 
-        Transaction tx = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            tx = session.beginTransaction();
+        EntityManager em = JpaUtil.getEntityManager();
+        EntityTransaction etx = em.getTransaction();
 
-            session.persist(workflow);
+        try {
+            etx.begin();
 
-            tx.commit();
+            em.persist(workflow);
+
+            etx.commit();
 
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (etx.isActive()) etx.rollback();
             throw e;
+        } finally {
+            em.close();
         }
         logger.info("Saved workflow with {} states", workflow.getStates().size());
 
@@ -107,7 +110,7 @@ public class DataBootstrapper {
         try {
             new DataBootstrapper().bootstrap();
         } finally {
-            HibernateUtil.shutdown();
+            JpaUtil.shutdown();
         }
     }
 }
