@@ -9,6 +9,9 @@ import java.util.Set;
 @Entity
 @Table(name = "workflows")
 public class Workflow {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -84,6 +87,8 @@ public class Workflow {
                 .findFirst()
                 .orElse(null);
     }
+
+    public Long getVersion() { return version; }
 
     public Long getId() {
         return id;
