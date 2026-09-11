@@ -23,9 +23,6 @@ public class Workflow {
     @OneToMany(mappedBy = "workflow", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<State> states = new HashSet<>();
 
-    @Transient
-    private State initialState;
-
     protected Workflow() {
         this.states = new HashSet<>();
     }
@@ -52,7 +49,12 @@ public class Workflow {
         if (state == null) {
             throw new IllegalArgumentException("State cannot be null");
         }
-        if (state.equals(initialState)) {
+        if (state.equals(
+                states.stream()
+                        .filter(State::isInitial)
+                        .findFirst()
+                        .orElse(null)
+        )) {
             throw new IllegalStateException("Cannot remove initial state");
         }
         if (states.remove(state)) {
@@ -67,7 +69,13 @@ public class Workflow {
         if (!states.contains(state)) {
             throw new IllegalArgumentException("State must be part of this workflow");
         }
-        this.initialState = state;
+
+        // clear old initial flag
+        states.stream()
+                .filter(State::isInitial)
+                .forEach(s->s.setInitial(false));
+        // set new initial
+        state.setInitial(true);
     }
 
     public State getStateByName(String name) {
@@ -106,7 +114,10 @@ public class Workflow {
     }
 
     public State getInitialState() {
-        return initialState;
+        return states.stream()
+                .filter(State::isInitial)
+                .findFirst()
+                .orElse(null);
     }
 
     @Override

@@ -63,6 +63,9 @@ public class AuditLog {
     public Issue getIssue() {
         return issue;
     }
+    public void setIssue(Issue issue) {
+        this.issue = issue;
+    }
 
     public String getAction() {
         return action;

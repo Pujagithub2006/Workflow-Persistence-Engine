@@ -7,6 +7,7 @@ import org.workflow.engine.domain.enums.IssueType;
 import org.workflow.engine.domain.value.IssueKeyConverter;
 import org.workflow.engine.domain.valueobject.IssueKey;
 
+import javax.sound.sampled.AudioFileFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -124,9 +125,15 @@ public class Issue {
         }
 
         Comment comment = new Comment(commentContent, author, this);
-        comments.add(comment);
+        if(comments.add(comment)) comment.setIssue(this);
 
         addAuditLog("Comment added", author, "comment");
+    }
+
+    public void removeComment(Comment comment) {
+        if (comments.remove(comment)) {
+            comment.setIssue(null);
+        }
     }
 
     public void transitionTo(State toState, User user) {
@@ -160,7 +167,17 @@ public class Issue {
     }
 
     private void addAuditLog(String action, User performedBy, String field) {
-        auditLogs.add(new AuditLog(this, action, performedBy, field));
+        AuditLog log = new AuditLog(this, action, performedBy, field);
+
+        if(auditLogs.add(log)) {
+            log.setIssue(this);
+        }
+    }
+
+    public void removeAuditLog(AuditLog log) {
+        if (auditLogs.remove(log)) {
+            log.setIssue(null);
+        }
     }
 
     public boolean isResolved() {
