@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.workflow.engine.domain.model.User;
 import org.workflow.engine.persistence.JpaUtil;
+import org.workflow.engine.persistence.TransactionManager;
 
 import java.sql.*;
 import java.util.List;
@@ -15,26 +16,11 @@ public class UserRepository {
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
     public User save(User user) {
-        EntityManager em = JpaUtil.getEntityManager();
-        EntityTransaction etx = em.getTransaction();
-
-        try {
-            etx.begin();
-
+        return TransactionManager.inTransaction(em->{
             User merged = em.merge(user);
-
-            etx.commit();
-
             logger.info("Saved user: {}", merged.getUsername());
             return merged;
-
-        } catch (Exception e) {
-            if(etx.isActive()) etx.rollback();
-            throw new RuntimeException("Failed to save user", e);
-
-        } finally {
-            em.close();
-        }
+        });
     }
 
     public Optional<User> findById(Long id) {
@@ -70,25 +56,11 @@ public class UserRepository {
     }
 
     public void delete(Long id) {
-        EntityManager em = JpaUtil.getEntityManager();
-        EntityTransaction etx = em.getTransaction();
-
-        try {
-            etx.begin();
-
+        TransactionManager.inTransaction(em->{
             User user = em.find(User.class, id);
-
-            if(user!=null) em.remove(user);
-
-            etx.commit();
-
+            if (user != null) em.remove(user);
             logger.info("Deleted user: {}", id);
-
-        } catch (Exception e) {
-            if (etx.isActive()) etx.rollback();
-            throw new RuntimeException("Failed to delete user", e);
-        } finally {
-            em.close();
-        }
+            return "User deleted!";
+        });
     }
 }
