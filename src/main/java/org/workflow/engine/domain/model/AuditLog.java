@@ -8,6 +8,9 @@ import java.util.Objects;
 @Entity
 @Table(name = "audit_logs")
 public class AuditLog {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +55,8 @@ public class AuditLog {
     protected void onPersist() {
         if (timestamp == null) timestamp = LocalDateTime.now();
     }
+
+    public Long getVersion() { return version; }
 
     public Long getId() {
         return id;
