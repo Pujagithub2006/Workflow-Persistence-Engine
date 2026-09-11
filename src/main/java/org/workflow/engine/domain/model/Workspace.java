@@ -9,6 +9,9 @@ import java.util.Set;
 @Entity
 @Table(name = "workspaces")
 public class Workspace {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -102,6 +105,8 @@ public class Workspace {
     public boolean hasMember(User user) {
         return members.contains(user);
     }
+
+    public Long getVersion() { return version; }
 
     public Long getId() {
         return id;
