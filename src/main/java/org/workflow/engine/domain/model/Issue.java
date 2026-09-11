@@ -16,6 +16,9 @@ import java.util.Objects;
 @Entity
 @Table(name = "issues")
 public class Issue {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -184,6 +187,8 @@ public class Issue {
         return currentState.getStatus() == IssueStatus.DONE ||
                 currentState.getStatus() == IssueStatus.CLOSED;
     }
+
+    public Long getVersion() { return version; }
 
     public Long getId() {
         return id;
