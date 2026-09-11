@@ -32,7 +32,7 @@ public class Comment {
     }
 
     public Comment(String commentContent, User author, Issue issue) {
-        if (content == null || content.isBlank()) {
+        if (commentContent == null || commentContent.isBlank()) {
             throw new IllegalArgumentException("Comment content cannot be null or empty");
         }
         if (author == null) {
@@ -76,6 +76,9 @@ public class Comment {
 
     public Issue getIssue() {
         return issue;
+    }
+    public void setIssue(Issue issue) {
+        this.issue =  issue;
     }
 
     public LocalDateTime getCreatedAt() {
