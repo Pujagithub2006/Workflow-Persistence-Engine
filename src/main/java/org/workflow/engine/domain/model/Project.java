@@ -30,7 +30,8 @@ public class Project {
     @JoinColumn(name = "workspace_id")
     private Workspace workspace;
 
-    @Transient
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id")
     private Workflow workflow;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -91,9 +92,18 @@ public class Project {
 
         Issue issue = new Issue(generateIssueKey(), summary, description, reporter, type, priority, initialState);
 
-        issues.add(issue);
-        issue.setProject(this);
+        addIssue(issue);
         return issue;
+    }
+
+    public void addIssue(Issue issue) {
+        if(issue == null) throw new IllegalArgumentException("Issue cannot be null");
+        if(issues.add(issue)) issue.setProject(this);
+    }
+
+    public void removeIssue(Issue issue) {
+        if(issue == null) throw new IllegalArgumentException("Issue cannot be null");
+        if(issues.remove(issue)) issue.setProject(null);
     }
 
     public void assignWorkflow(Workflow workflow) {
@@ -159,6 +169,9 @@ public class Project {
 
     public Workflow getWorkflow() {
         return workflow;
+    }
+    public void setWorkflow(Workflow workflow) {
+        this.workflow = workflow;
     }
 
     public User getProjectLead() {
