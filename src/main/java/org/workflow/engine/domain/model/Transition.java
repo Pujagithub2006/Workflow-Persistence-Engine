@@ -14,6 +14,9 @@ import java.util.Objects;
 
 )
 public class Transition {
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -70,6 +73,8 @@ public class Transition {
         }
         issue.transitionTo(toState, user);
     }
+
+    public Long getVersion() { return version; }
 
     public Long getId() {
         return id;
