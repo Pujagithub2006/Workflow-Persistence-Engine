@@ -3,8 +3,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="
-         http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+            http://maven.apache.org/POM/4.0.0
+            https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,39 +13,58 @@
     <!-- ========================================================= -->
 
     <groupId>org.workflow.engine</groupId>
-
     <artifactId>workflow-persistence-engine</artifactId>
-
     <version>1.0.0-SNAPSHOT</version>
-
     <packaging>jar</packaging>
 
     <name>Workflow Persistence Engine</name>
 
     <description>
-        Enterprise Java Persistence Investigation
-        inspired by Jira Workflow Architecture.
+        Enterprise Java Persistence Investigation inspired by Jira Workflow Architecture.
     </description>
+
+    <!-- ========================================================= -->
+    <!-- Project Properties                                        -->
+    <!-- ========================================================= -->
 
     <properties>
 
-        <project.build.sourceEncoding>
-            UTF-8
-        </project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <maven.compiler.release>25</maven.compiler.release>
 
         <postgres.version>42.7.7</postgres.version>
+        <hibernate.version>6.5.2.Final</hibernate.version>
+
+        <jakarta.persistence.version>3.2.0</jakarta.persistence.version>
 
         <slf4j.version>2.0.17</slf4j.version>
-
         <logback.version>1.5.18</logback.version>
 
         <junit.version>5.13.4</junit.version>
+        <assertj.version>3.27.6</assertj.version>
 
     </properties>
 
+    <!-- ========================================================= -->
+    <!-- Dependencies                                              -->
+    <!-- ========================================================= -->
+
     <dependencies>
+
+        <!-- Jakarta Persistence API -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>${jakarta.persistence.version}</version>
+        </dependency>
+
+        <!-- Hibernate ORM -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
 
         <!-- PostgreSQL JDBC Driver -->
         <dependency>
@@ -54,7 +73,7 @@
             <version>${postgres.version}</version>
         </dependency>
 
-        <!-- Logging Facade -->
+        <!-- Logging API -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -76,13 +95,19 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Fluent Assertions -->
         <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>6.5.2.Final</version>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
+
+    <!-- ========================================================= -->
+    <!-- Build Configuration                                       -->
+    <!-- ========================================================= -->
 
     <build>
 
@@ -90,57 +115,37 @@
 
             <!-- Java Compiler -->
             <plugin>
-
                 <groupId>org.apache.maven.plugins</groupId>
-
                 <artifactId>maven-compiler-plugin</artifactId>
-
                 <version>3.14.1</version>
 
                 <configuration>
-
-                    <release>25</release>
-
+                    <release>${maven.compiler.release}</release>
                 </configuration>
-
             </plugin>
 
             <!-- Unit Testing -->
             <plugin>
-
                 <groupId>org.apache.maven.plugins</groupId>
-
                 <artifactId>maven-surefire-plugin</artifactId>
-
                 <version>3.5.4</version>
-
             </plugin>
 
-            <!-- Create Executable Manifest -->
+            <!-- Executable JAR -->
             <plugin>
-
                 <groupId>org.apache.maven.plugins</groupId>
-
                 <artifactId>maven-jar-plugin</artifactId>
-
                 <version>3.4.2</version>
 
                 <configuration>
-
                     <archive>
-
                         <manifest>
-
                             <addClasspath>true</addClasspath>
-
                             <mainClass>
                                 org.workflow.engine.bootstrap.WorkflowPersistenceApplication
                             </mainClass>
-
                         </manifest>
-
                     </archive>
-
                 </configuration>
 
             </plugin>
